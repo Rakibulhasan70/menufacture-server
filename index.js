@@ -243,6 +243,13 @@ async function run() {
             res.send(result);
         })
 
+        // ///////// admin er jnno add product ///////////////
+        app.post('/part', async (req, res) => {
+            const newProduct = req.body
+            console.log(newProduct);
+            const result = await CartsCollection.insertOne(newProduct)
+            res.send(result)
+        })
 
     }
     finally {
