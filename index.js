@@ -136,7 +136,7 @@ async function run() {
         })
 
 
-        // /////// my profile inserted item ///////////
+        // /////// my profile inserted sectrion ///////////
 
         // ///  database e my info save kora ////////
         app.post('/myprofile', async (req, res) => {
@@ -152,6 +152,24 @@ async function run() {
             const cursor = myprofileCollection.find(email)
             const products = await cursor.toArray()
             res.send(products)
+        });
+
+        // /////////// data update //////////
+        app.put('/myprofile/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatUser = req.body;
+            const filter = { _id: ObjectId(id) }
+            const option = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    education: updatUser.education,
+                    city: updatUser.city,
+                    phone: updatUser.phone
+
+                }
+            };
+            const result = await myprofileCollection.updateOne(filter, updateDoc, option)
+            res.send(result);
         });
 
 
