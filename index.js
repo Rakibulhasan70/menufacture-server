@@ -3,6 +3,7 @@ const app = express()
 const cors = require('cors');
 const port = process.env.PORT || 5000;
 require('dotenv').config()
+const jwt = require('jsonwebtoken')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
@@ -16,13 +17,34 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+
+function verifyJWT(req, res, next) {
+    const authHeaders = req.headers.authorization
+    if (!authHeaders) {
+        return res.status(401).send({ message: 'unAuthorized access' })
+    }
+    const token = authHeaders.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden access' })
+        }
+        req.decoded = decoded;
+        next();
+    })
+
+}
+
+
 async function run() {
     try {
         await client.connect()
         const CartsCollection = client.db('Car_Parts').collection('Parts')
 
         const reviewsCollection = client.db('Car_Parts').collection('reviews')
+
         const orderCollection = client.db('Car_Parts').collection('orders')
+
+        const myprofileCollection = client.db('Car_Parts').collection('myProfile')
 
 
         // get all data 
@@ -112,6 +134,37 @@ async function run() {
             const result = await orderCollection.deleteOne(query)
             res.send(result)
         })
+
+
+        // /////// my profile inserted item ///////////
+
+        // ///  database e my info save kora ////////
+        app.post('/myprofile', async (req, res) => {
+            const newService = req.body;
+            const result = await myprofileCollection.insertOne(newService);
+            res.send(result);
+        });
+
+        // ///////// query by email for my profile ///////////
+
+        app.get("/myprofile/:email", async (req, res) => {
+            const email = req.params;
+            const cursor = myprofileCollection.find(email)
+            const products = await cursor.toArray()
+            res.send(products)
+        });
+
+
+
+        // ////payment section /////////////////////
+
+        // app.get('/addItem/:id', verifyJWT, async (req, res) => {
+        //     const id = req.params.id;
+        //     const query = { _id: ObjectId(id) };
+        //     const booking = await orderCollection.findOne(query)
+        //     res.send(booking)
+        // })
+
 
     }
     finally {
