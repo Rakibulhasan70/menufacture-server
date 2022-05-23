@@ -18,21 +18,21 @@ console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
-function verifyJWT(req, res, next) {
-    const authHeaders = req.headers.authorization
-    if (!authHeaders) {
-        return res.status(401).send({ message: 'unAuthorized access' })
-    }
-    const token = authHeaders.split(' ')[1];
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
-        if (err) {
-            return res.status(403).send({ message: 'Forbidden access' })
-        }
-        req.decoded = decoded;
-        next();
-    })
+// function verifyJWT(req, res, next) {
+//     const authHeaders = req.headers.authorization
+//     if (!authHeaders) {
+//         return res.status(401).send({ message: 'unAuthorized access' })
+//     }
+//     const token = authHeaders.split(' ')[1];
+//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+//         if (err) {
+//             return res.status(403).send({ message: 'Forbidden access' })
+//         }
+//         req.decoded = decoded;
+//         next();
+//     })
 
-}
+// }
 
 
 async function run() {
@@ -45,6 +45,10 @@ async function run() {
         const orderCollection = client.db('Car_Parts').collection('orders')
 
         const myprofileCollection = client.db('Car_Parts').collection('myProfile')
+
+        const userCollection = client.db('Car_Parts').collection('users')
+
+        const paymentCollection = client.db('Car_Parts').collection('payments')
 
 
         // get all data 
@@ -172,16 +176,72 @@ async function run() {
             res.send(result);
         });
 
+        // ///////////// user er jnno /////////////////////
+
+        app.get('/user', async (req, res) => {
+            const users = await userCollection.find().toArray()
+            res.send(users)
+        })
+
+
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body
+            const filter = { email: email };
+            const option = { upsert: true };
+            const update = {
+                $set: user,
+            }
+            const result = await userCollection.updateOne(filter, update, option)
+            // token jenarete
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30d' })
+            res.send({ result, token });
+        });
 
 
         // ////payment section /////////////////////
 
-        // app.get('/addItem/:id', verifyJWT, async (req, res) => {
-        //     const id = req.params.id;
-        //     const query = { _id: ObjectId(id) };
-        //     const booking = await orderCollection.findOne(query)
-        //     res.send(booking)
-        // })
+        app.get('/part/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const booking = await paymentCollection.findOne(query)
+            res.send(booking)
+        })
+
+
+        ///////////  admin section ////////////////// 
+
+        app.get('/user', async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        });
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin })
+        })
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+
+            res.send({ result });
+        });
+        app.put('/user/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        })
 
 
     }
