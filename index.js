@@ -251,6 +251,25 @@ async function run() {
             res.send(result)
         })
 
+        // /////////////// manage orders a delete kora ////////////////
+
+        // /// first e get kora /////////////////
+        app.get('/part', async (req, res) => {
+            const query = {}
+            const cursor = CartsCollection.find(query)
+            const result = await cursor.toArray()
+            res.send(result)
+        });
+
+        // delete kora //////////
+
+        app.delete('/part/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await CartsCollection.deleteOne(query)
+            res.send(result)
+        })
+
     }
     finally {
 
