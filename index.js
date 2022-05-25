@@ -1,11 +1,11 @@
 const express = require('express');
-const app = express()
 const cors = require('cors');
-const port = process.env.PORT || 5000;
 require('dotenv').config()
 const jwt = require('jsonwebtoken')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-
+const app = express()
+const port = process.env.PORT || 5000;
+// const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 // middlewear
 app.use(cors())
@@ -14,7 +14,7 @@ app.use(express.json());
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.euupn.mongodb.net/?retryWrites=true&w=majority`;
-console.log(uri);
+// console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
@@ -100,7 +100,7 @@ async function run() {
         // insert review
         app.post('/review', async (req, res) => {
             const newProduct = req.body
-            console.log(newProduct);
+            // console.log(newProduct);
             const result = await reviewsCollection.insertOne(newProduct)
             res.send(result)
         })
@@ -198,17 +198,6 @@ async function run() {
             res.send({ result, token });
         });
 
-
-        // ////payment section /////////////////////
-
-        app.get('/part/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const booking = await paymentCollection.findOne(query)
-            res.send(booking)
-        })
-
-
         ///////////  admin section ////////////////// 
 
         app.get('/user', async (req, res) => {
@@ -246,7 +235,7 @@ async function run() {
         // ///////// admin er jnno add product ///////////////
         app.post('/part', async (req, res) => {
             const newProduct = req.body
-            console.log(newProduct);
+            // console.log(newProduct);
             const result = await CartsCollection.insertOne(newProduct)
             res.send(result)
         })
@@ -270,13 +259,30 @@ async function run() {
             res.send(result)
         })
 
+
+        // ////payment section /////////////////////
+
+        app.get('/myorder/order/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const booking = await orderCollection.findOne(query)
+            res.send(booking)
+        })
+        app.get('/myorder', async (req, res) => {
+            const query = {}
+            const cursor = orderCollection.find(query)
+            const result = await cursor.toArray()
+            res.send(result)
+        });
+
+
     }
     finally {
 
     }
 }
 
-run().catch(console.dir())
+run().catch(console.dir)
 
 
 app.get('/', (req, res) => {
