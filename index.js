@@ -291,6 +291,40 @@ async function run() {
             });
         })
 
+        app.patch('/myorder/:id', async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = { _id: ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+
+            const result = await paymentCollection.insertOne(payment);
+            const updatedBooking = await orderCollection.updateOne(filter, updatedDoc)
+            res.send(updatedDoc)
+        })
+
+        // manage all product er jnno
+
+        app.get('/manageorder', async (req, res) => {
+            const query = {}
+            const cursor = orderCollection.find(query)
+            const result = await cursor.toArray()
+            res.send(result)
+        });
+
+        // manage order delete
+
+        app.delete('/manageorder/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await orderCollection.deleteOne(query)
+            res.send(result)
+        })
+
 
     }
     finally {
