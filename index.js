@@ -330,7 +330,7 @@ run().catch(console.dir)
 
 
 app.get('/', (req, res) => {
-    res.send('assignment 12 is on fire')
+    res.send('assignment 12 is on fire and menufacture project is start')
 })
 
 app.listen(port, () => {
